@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Para Anghela 💌</title>
+  <!-- Fuentes románticas de Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Playfair+Display:ital,wght@0,500;1,500&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #ffeef2;
+      --envelope-front: #ff758f;
+      --envelope-back: #ff4d6d;
+      --envelope-flap: #ff8fa3;
+      --envelope-shadow: rgba(201, 24, 74, 0.25);
+      --paper-bg: #fffdf9;
+      --text-color: #4a2531;
+      --accent-color: #c9184a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      width: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top, #fff0f3, #ffccd5);
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 70px 16px 40px;
+      position: relative;
+    }
+
+    /* Scrollbar estética para toda la página */
+    body::-webkit-scrollbar {
+      width: 8px;
+    }
+    body::-webkit-scrollbar-track {
+      background: #ffe5ec;
+    }
+    body::-webkit-scrollbar-thumb {
+      background: #ff758f;
+      border-radius: 10px;
+    }
+
+    /* Botón de música */
+    .music-control {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ffb3c1;
+      color: var(--accent-color);
+      padding: 8px 14px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .music-control:hover {
+      transform: scale(1.05);
+      background: #ffffff;
+    }
+
+    /* Contenedor con perspectiva 3D */
+    .scene {
+      width: 345px;
+      height: 235px;
+      perspective: 1200px;
+      z-index: 10;
+      margin-top: 20px;
+      transition: margin-top 0.8s ease;
+    }
+
+    /* Cuando se abre, empujamos la escena hacia abajo para que no se corte arriba */
+    .scene.opened-scene {
+      margin-top: 240px;
+    }
+
+    /* Tarjeta que gira (Espaldas -> Frente) */
+    .envelope-wrapper {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.4, 0.2, 0.2, 1);
+      cursor: pointer;
+    }
+
+    /* Cuando se activa el giro */
+    .envelope-wrapper.flipped {
+      transform: rotateY(180deg);
+      cursor: default;
+    }
+
+    /* Caras compartidas */
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      box-shadow: 0 15px 35px var(--envelope-shadow);
+    }
+
+    /* ================= CARA TRASERA (INICIAL: DE / PARA) ================= */
+    .face.back {
+      background: linear-gradient(135deg, #ff8fa3 0%, #ff4d6d 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 25px;
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .stamp {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 46px;
+      height: 54px;
+      background: #fff0f3;
+      border: 2px dashed var(--accent-color);
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.35rem;
+      transform: rotate(6deg);
+    }
+
+    .address-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--text-color);
+      padding: 16px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+
+    .address-line {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #ffb3c1;
+      padding-bottom: 4px;
+      line-height: 1.25;
+    }
+
+    .address-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .address-line span {
+      font-family: 'Caveat', cursive;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-left: 4px;
+    }
+
+    .tap-hint {
+      position: absolute;
+      bottom: 12px;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+
+    /* ================= CARA FRONTAL (EL SOBRE QUE SE ABRE) ================= */
+    .face.front {
+      background: var(--envelope-back);
+      transform: rotateY(180deg);
+    }
+
+    /* La hoja de la carta (position: absolute) */
+    .letter {
+      position: absolute;
+      bottom: 10px;
+      left: 4%;
+      width: 92%;
+      height: 88%;
+      background: var(--paper-bg);
+      border-radius: 8px;
+      padding: 22px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      z-index: 2;
+      transition: transform 0.9s ease-in-out, height 0.9s ease-in-out;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Scrollbar estética interna de la carta */
+    .letter::-webkit-scrollbar {
+      width: 6px;
+    }
+    .letter::-webkit-scrollbar-track {
+      background: #fff0f3;
+      border-radius: 10px;
+    }
+    .letter::-webkit-scrollbar-thumb {
+      background: #ff8fa3;
+      border-radius: 10px;
+    }
+
+    /* Solapas laterales e inferior del sobre (position: absolute) */
+    .pocket {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+    }
+
+    .pocket::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--envelope-front);
+      clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .pocket::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #ff6382;
+      clip-path: polygon(0 100%, 50% 48%, 100% 100%);
+    }
+
+    /* Solapa superior triangular (position: absolute) */
+    .flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--envelope-flap);
+      clip-path: polygon(0 0, 50% 58%, 100% 0);
+      transform-origin: top;
+      transition: transform 0.7s ease-in-out;
+      z-index: 4;
+      border-radius: 10px 10px 0 0;
+    }
+
+    /* Sello de corazón en la solapa */
+    .wax-seal {
+      position: absolute;
+      top: 46%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 42px;
+      background: #c9184a;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.1rem;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+      z-index: 5;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ================= ESTADO ABIERTO ================= */
+    .envelope-wrapper.open .flap {
+      transform: rotateX(180deg);
+      z-index: 1;
+    }
+
+    .envelope-wrapper.open .wax-seal {
+      opacity: 0;
+    }
+
+    .envelope-wrapper.open .letter {
+      transform: translateY(-200px);
+      height: min(410px, 72vh);
+      z-index: 6;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    /* Tipografía interna de la carta */
+    .letter-header {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--accent-color);
+      margin-bottom: 12px;
+      border-bottom: 1px dashed #ffb3c1;
+      padding-bottom: 6px;
+    }
+
+    .letter-body {
+      font-size: 0.86rem;
+      line-height: 1.62;
+      color: var(--text-color);
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .letter-body p {
+      margin-bottom: 12px;
+    }
+
+    .letter-divider {
+      text-align: center;
+      color: #ff758f;
+      font-size: 0.9rem;
+      margin: 14px 0;
+      letter-spacing: 6px;
+    }
+
+    .letter-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f3d5dc;
+      padding-top: 10px;
+      margin-top: 8px;
+    }
+
+    .signature {
+      font-family: 'Caveat', cursive;
+      font-size: 1.45rem;
+      color: var(--accent-color);
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: #fff0f3;
+      border: 1px solid #ffb3c1;
+      color: var(--accent-color);
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .close-btn:hover {
+      background: #ffccd5;
+    }
+
+    /* ================= LLUVIA DE CORAZONES + USAGI Y MOMONGA ================= */
+    .heart-particle {
+      position: fixed;
+      top: -40px;
+      user-select: none;
+      pointer-events: none;
+      z-index: 1;
+      animation: fall linear forwards;
+    }
+
+    .character-particle {
+      position: fixed;
+      top: -70px;
+      user-select: none;
+      pointer-events: none;
+      z-index: 2;
+      filter: drop-shadow(0 4px 6px rgba(201, 24, 74, 0.25));
+      animation: fallCharacter linear forwards;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(108vh) rotate(360deg);
+      }
+    }
+
+    @keyframes fallCharacter {
+      0% {
+        transform: translateY(0) rotate(-12deg);
+      }
+      50% {
+        transform: translateY(54vh) rotate(12deg);
+      }
+      100% {
+        transform: translateY(110vh) rotate(-12deg);
+      }
+    }
+
+    /* Ajuste para pantallas más grandes */
+    @media (min-width: 600px) {
+      .scene {
+        width: 440px;
+        height: 280px;
+      }
+      .scene.opened-scene {
+        margin-top: 260px;
+      }
+      .address-line span {
+        font-size: 1.4rem;
+      }
+      .envelope-wrapper.open .letter {
+        transform: translateY(-220px);
+        height: min(450px, 75vh);
+      }
+      .letter-body {
+        font-size: 0.92rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Audio de Mac DeMarco -->
+  <audio id="bgMusic" loop>
+    <source src="musica.mp3" type="audio/mpeg">
+  </audio>
+
+  <button class="music-control" id="musicBtn" onclick="toggleMusic()">🎵 Música: Pausada</button>
+
+  <div class="scene" id="scene">
+    <div class="envelope-wrapper" id="envelope" onclick="openEnvelope()">
+      
+      <!-- PARTE TRASERA (LO PRIMERO QUE SE VE) -->
+      <div class="face back">
+        <div class="stamp">💍</div>
+        <div class="address-box">
+          <div class="address-line">De: <span id="senderName">John (tu prometido) papito</span></div>
+          <div class="address-line">Para: <span id="receiverName">Anghela (mi prometida) papita</span></div>
+        </div>
+        <div class="tap-hint">✨ Toca el sobre para abrir ✨</div>
+      </div>
+
+      <!-- PARTE FRONTAL (DONDE OCURRE LA MAGIA) -->
+      <div class="face front">
+        <div class="flap"></div>
+        <div class="wax-seal">💌</div>
+        
+        <div class="letter" onclick="event.stopPropagation()">
+          <div>
+            <div class="letter-header" id="letterTitle">Para mi prometida, Anghela:</div>
+            <div class="letter-body" id="letterText">
+              <p>Oa amor como estaas? Yo quisiera estar mas cerca de ti no tienes idea de como te extraño demasiado y tanto, me muero por ganas de verte mi papita, lo siento por la discucion del otro dia realmente siento que si me deje llevar pero trato de serte lo mas directo y honesto, no quiero ser un dolor de cabeza para alejarte de mi y voy a comunicarme mejor, cambiando de tema</p>
+
+              <p>No sabes cuanto te extraño ni cuan feliz me hace tu compañia aunque sea asi virtual me haces reir hablas te ries y es lindo es como si fuera un dia normal despues de vernos y me hace sentir mas aliviado y mas cercano a ti, realmente no me quiero hacer tan dependiente pero es lo que me hace feliz actualmente amor, y bueño siento que esta bien porque no nos despedimos y fue como si solo fuera un ya nos veremos de nuevo pronto y amor hare todo lo posible para sorprenderte pero sin darte fechas si?</p>
+
+              <p>Espero que las skinsitas y mi rara manera de darte amor te hagan sentir amada, me encantas y me haces feliz eres mi niña mi amor y me gusta consentirnos los dos no solo yo por eso nos regalo cositas y le pido sushito o papitas para disfrutar amor, te amo mucho y enserio espero que te sientas asi amada y hot como me pones cuando me mandas fotitos de tu linda carita o de tu tremendo cuerpazo amorsito mio, te amo tanto y te extraño demasiado que siento que voy a explotar de la ternura, pienso alargar un poco esta carta por lo que no he podido hacer otras y igual la hare en papel y hare que sea bonita de leer para ti, para que sientas todo mi amorsito</p>
+
+              <p>Por hoy te digo que me sigues haciendo sentir demasiado afortunado y feliz con tu compañia y que sin ti enserio me siento perdido, te amo mi amor y buenas nochees</p>
+
+              <div class="letter-divider">✦ ✦ ✦</div>
+
+              <p>Oaoa cariño mio, como estas? Muy bieen? Es bueno saberlo porque yoo me siento muy melancolico y te extraño mucho, hmmm amor desde la charla que tuvimos me puse a pensar mucho y aaaa me estoy esforzando mucho para que todo salgau bien y no estancarme siendo negativo, quiero salir adelante por nosotros por un futuro verdadero viviendo juntos porque eres la mujer que me causa paz y me encanta eso me hace reforzar mas la idea de que soy tuyoo.. solo tuyo tuyoo.. y de nadie mas, te amo cariño mio me encanta tu risita me da gusto poder expresarnos de esta manera en el lol con los grititos jjajaja me causan demasiada gracia amorsito mio y es tan linda tu risa me da mucha ternura, espero que me estes extrñando tanto como yo a ti corazon y sepas que sigues siendo mi motor para seguir adelante y no rendirme eres lo que me llena de determinacion para no rendirme, te amo mua corazoncito.</p>
+
+              <p>Buenas noches amor seguire escribiendo aqui por unos dias mas, he estado pensando en que podria darte de navidad pero amor no se me ocurre una buena idea y me frusta mucho quisiera hacerte algo lindo y especial y claro yo sere el regalo de navidad pero llegare un poco tarde, te amo mi amor mua!</p>
+
+              <div class="letter-divider">✦ ✦ ✦</div>
+
+              <p>mi corazon hola, como estas hoyy creo que ya juntare las 3 cartas para enviartelas espero que te guste este pequeño detallito me informe un poco de como hacer estas cartas virtuales y espero me quede bien y mas importante te guste demasiado como tu me sigues gustando demasiado, te amo amor eso no va a cambiar de ninguna manera porque tu eres la mujer que siempre imagine para mi, mi mujer perfecta jugetona chistosa picante eres todo y mas para mi, no te vayas de mi lado jamas cariñito mio.</p>
+
+              <p>espero me esperes para continuar con nuestra historia de amor juntos y llegar a casarnos y tener nuestros 3 hijos para jugar y rankear juntos, eres mi vida entera, lo siento por ser un chico tan problematico y peleon aveces pero enserio no tienes una idea de lo mucho que te extraño de lo mucho que anhelo ver tu carita sorprendida cuando iba con flores un dia random, te extraño tanto mi niña linda, y ire lo mas pronto posible para ser tu regalo de navidad atrasado y estar juntitosss como siempre debio ser, y debe decirme cual es el colageno que quiere su mami para ganarmela, y que me de permiso de casarme con la hija tan increible que tiene.</p>
+
+              <p>eres mi todo Anghela no tienes ni idea de cuantas veces te pienso, de lo nervioso que me pongo cuando pienso en ti o iba a verte, y de lo nervioso de lo que estoy ahora pensando si te gustara esta carta de amor un tanto peculiar, te amo. te amo te amo corazon, cariño, mi amor.</p>
+            </div>
+          </div>
+          <div class="letter-footer">
+            <span class="signature" id="letterSign">Tuyo siempre, John ❤️</span>
+            <button class="close-btn" onclick="closeEnvelope()">Guardar carta</button>
+          </div>
+        </div>
+
+        <div class="pocket"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const envelope = document.getElementById('envelope');
+    const bgMusic = document.getElementById('bgMusic');
+    const musicBtn = document.getElementById('musicBtn');
+    let isOpened = false;
+    let heartInterval = null;
+    let charInterval = null;
+
+    bgMusic.volume = 0.5;
+
+    function openEnvelope() {
+      if (isOpened) return;
+      isOpened = true;
+
+      envelope.classList.add('flipped');
+      playMusic();
+
+      setTimeout(() => {
+        scene.classList.add('opened-scene');
+        envelope.classList.add('open');
+        startHearts();
+      }, 850);
+    }
+
+    function closeEnvelope() {
+      envelope.classList.remove('open');
+      scene.classList.remove('opened-scene');
+      stopHearts();
+
+      setTimeout(() => {
+        envelope.classList.remove('flipped');
+        isOpened = false;
+      }, 800);
+    }
+
+    function playMusic() {
+      bgMusic.play().then(() => {
+        musicBtn.textContent = '🎵 My Kind of Woman';
+      }).catch(() => {
+        musicBtn.textContent = '▶️ Reproducir música';
+      });
+    }
+
+    function toggleMusic() {
+      if (bgMusic.paused) {
+        playMusic();
+      } else {
+        bgMusic.pause();
+        musicBtn.textContent = '🔇 Música pausada';
+      }
+    }
+
+    function startHearts() {
+      if (heartInterval) return;
+
+      // 1. Lluvia intensa de corazones
+      const hearts = ['❤️', '💖', '💗', '💕', '💘', '💝', '💞', '💓'];
+      heartInterval = setInterval(() => {
+        const heart = document.createElement('div');
+        heart.classList.add('heart-particle');
+        heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.animationDuration = (Math.random() * 2.5 + 2.8) + 's';
+        heart.style.fontSize = (Math.random() * 14 + 16) + 'px';
+        document.body.appendChild(heart);
+
+        setTimeout(() => {
+          heart.remove();
+        }, 5500);
+      }, 130);
+
+      // 2. Lluvia de Usagi y Momonga más grandes y destacados
+      const characters = ['usagi.png', 'momonga.png'];
+      charInterval = setInterval(() => {
+        const img = document.createElement('img');
+        img.classList.add('character-particle');
+        img.src = characters[Math.floor(Math.random() * characters.length)];
+        img.style.left = Math.random() * 92 + 'vw';
+        const size = Math.floor(Math.random() * 16 + 48); // Entre 48px y 64px
+        img.style.width = size + 'px';
+        img.style.height = 'auto';
+        img.style.animationDuration = (Math.random() * 2.5 + 3.8) + 's';
+        document.body.appendChild(img);
+
+        setTimeout(() => {
+          img.remove();
+        }, 6500);
+      }, 550);
+    }
+
+    function stopHearts() {
+      clearInterval(heartInterval);
+      clearInterval(charInterval);
+      heartInterval = null;
+      charInterval = null;
+    }
+  </script>
+</body>
+</html>
